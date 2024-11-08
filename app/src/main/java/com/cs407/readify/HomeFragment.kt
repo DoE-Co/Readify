@@ -43,7 +43,7 @@ class HomeFragment : androidx.fragment.app.Fragment() {
         }
         binding.profileButton.setOnClickListener {
             // Navigate to ProfileFragment
-            findNavController().navigate(R.id.action_homeFragment_to_profileFragment)
+            //findNavController().navigate(R.id.action_homeFragment_to_profileFragment)
         }
     }
     override fun onDestroyView() {
