@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    tools:context=".HomeFragment">
+
+    <!-- Horizontal bar for buttons-->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="top"
+        android:padding="16dp">
+
+        <!-- Settings button (Left aligned) -->
+        <ImageButton
+            android:id="@+id/settingsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/circular_background"
+            android:contentDescription="@string/settings"
+            android:src="@drawable/ic_settings"
+            android:layout_marginEnd="16dp" />
+
+        <!-- Spacer to push profile button to the right -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <!-- Profile button (Right aligned) -->
+        <ImageButton
+            android:id="@+id/profileButton"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/circular_background"
+            android:contentDescription="@string/profile"
+            android:src="@drawable/ic_profile" />
+    </LinearLayout>
+
+<!-- Second bar -->
+    <LinearLayout
+        android:id="@+id/secondBar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/rounded_gray_background"
+        android:gravity="center">
+
+        <!-- Search TextView -->
+        <TextView
+            android:id="@+id/searchWordTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_a_word"
+            android:textColor="#000000"
+            android:textSize="16sp" />
+
+        <!-- Spacer to push search button to the right -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <!-- Search button (far right) -->
+        <ImageButton
+            android:id="@+id/searchButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_search"
+            android:background="@drawable/circular_background"
+            android:padding="8dp"
+            android:layout_gravity="center_vertical" />
+
+    </LinearLayout>
+
+    <!-- Floating "+" button at the bottom-right corner -->
+    <ImageButton
+        android:id="@+id/addButton"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_add"
+        android:background="@drawable/circular_purple_background"/>
+
+    <!-- Popup Card with Options -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/popupCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        android:layout_gravity="bottom|center"
+        app:cardCornerRadius="8dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardElevation="4dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Option 1: Scan Document -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_camera"
+                android:contentDescription="@string/camera" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scan Document"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <!-- Option 2: Overlay -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_world"
+                android:contentDescription="@string/world" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Overlay"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <!-- Option 3: Add Word -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_add_word"
+                android:contentDescription="@string/add_word" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Word"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
+
+</FrameLayout>
