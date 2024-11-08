@@ -53,18 +53,34 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:background="@drawable/rounded_gray_background"
-        android:gravity="center">
+        android:gravity="center_vertical">
 
-        <!-- Search TextView -->
+        <!-- Menu bullet (far left) -->
+        <ImageButton
+            android:id="@+id/menuBullet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_menu_bullet"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="16dp" />
+
+        <!-- Spacer to center search word TextView -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <!-- Search TextView (centered) -->
         <TextView
             android:id="@+id/searchWordTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/search_a_word"
+            android:hint="@string/search_a_word"
             android:textColor="#000000"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:layout_gravity="center" />
 
-        <!-- Spacer to push search button to the right -->
+        <!-- Spacer to push search button to the far right -->
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
