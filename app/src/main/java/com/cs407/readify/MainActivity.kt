@@ -44,26 +44,26 @@ class MainActivity : ComponentActivity() {
                             ),
                             title = {
                                 Text("Top app bar")
-                        })
+                            })
                     },
                     bottomBar ={
                         BottomAppBar (containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                      tonalElevation = 0.dp,)
+                            tonalElevation = 0.dp,)
                         { Text(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             text ="Bottom Bar",
 
-                        ) }
+                            ) }
                     }
-                    )
+                )
                 { innerPadding ->
 
                     Column {
                         Button(
                             onClick = { println("click") },
                             content = { Text("Click me") },
-                           // modifier = Modifier.padding(innerPadding)
+                            // modifier = Modifier.padding(innerPadding)
                         )
                         Greeting(
                             name = "Android",
