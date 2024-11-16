@@ -10,4 +10,11 @@
     <string name="name">Name:</string>
     <string name="email">Email:</string>
     <string name="search_a_word">Search a word</string>
+    <string name="error_invalid_login">Username or Password is incorrect</string>
+    <string name="error_passwords_no_match">Passwords don\'t match</string>
+    <string name="error_user_not_exist">Username does not exist</string>
+    <string name="error_user_already_exists">Username already exists</string>
+    <string name="userPasswdKV">com.cs407.readify.userPasswdKV</string>
+    <string name="login_screen">LoginScreen</string>
+    <string name="create_account_screen">createAccountScreen</string>
 </resources>
