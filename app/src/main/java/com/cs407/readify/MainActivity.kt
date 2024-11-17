@@ -1,117 +1,132 @@
 package com.cs407.readify
 
-import android.content.res.Resources
+import android.content.ComponentName
+import android.content.Intent
+import android.net.Uri
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.cs407.readify.ui.theme.ReadifyTheme
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 
-class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {// every single ui element you add in here should be a compose function aka composable
-            ReadifyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        TopAppBar(
-                            colors = topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            ),
-                            title = {
-                                Text("Top app bar")
-                            })
-                    },
-                    bottomBar ={
-                        BottomAppBar (containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            tonalElevation = 0.dp,)
-                        { Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            text ="Bottom Bar",
+        setContentView(R.layout.activity_main)
 
-                            ) }
-                    }
-                )
-                { innerPadding ->
+        // Check permissions immediately
+        checkAndRequestPermissions()
 
-                    Column {
-                        Button(
-                            onClick = { println("click") },
-                            content = { Text("Click me") },
-                            // modifier = Modifier.padding(innerPadding)
-                        )
-                        Greeting(
-                            name = "Android",
-                            modifier = Modifier.padding(innerPadding)
-                        )
+        // Handle text from browser selection
+        handleIncomingText()
+
+        // Check if accessibility service is enabled
+        if (!isAccessibilityServiceEnabled()) {
+            showEnableAccessibilityDialog()
+        }
+
+        // Check for overlay permission
+        if (!Settings.canDrawOverlays(this)) {
+            requestOverlayPermission()
+        }
+
+        // Simulate receiving text from browser
+        val testButton = findViewById<Button>(R.id.testButton)
+        testButton.setOnClickListener {
+            showTranslationBottomSheet("こんにちは")
+        }
+    }
+
+    private fun showTranslationBottomSheet(text: String) {
+        TestTranslationBottomSheet.newInstance(text)
+            .show(supportFragmentManager, "translation")
+    }
+
+    private fun handleIncomingText() {
+        when (intent?.action) {
+            Intent.ACTION_PROCESS_TEXT -> {
+                val text = intent?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+                    ?: intent?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT_READONLY)
+
+                text?.let {
+                    showTranslationBottomSheet(it.toString())
+                }
+            }
+            // Handle existing test case
+            Intent.ACTION_SEND -> {
+                if (intent.type == "text/plain") {
+                    intent.getStringExtra(Intent.EXTRA_TEXT)?.let { text ->
+                        showTranslationBottomSheet(text)
                     }
                 }
             }
-        }//end setContent
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyScreen() {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("My App") })
-        },
-        bottomBar = {
-            BottomAppBar { Text("Bottom Bar") }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { /* Do something */ }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add")
-            }
-        },
-        content = { padding ->
-            // Main content with padding
-            Column(modifier = Modifier.padding(padding)) {
-                Text("Hello, Scaffold!")
-            }
         }
-    )
-}
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ReadifyTheme {
-        Greeting("Connor")
+
+
+    private fun checkAndRequestPermissions() {
+        // Check if accessibility service is enabled
+        if (!isAccessibilityServiceEnabled()) {
+            showEnableAccessibilityDialog()
+        }
+
+        // Check overlay permission
+        if (!Settings.canDrawOverlays(this)) {
+            requestOverlayPermission()
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val expectedComponentName = ComponentName(this, TranslationOverlayService::class.java)
+
+        val enabledServices = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )
+
+        return enabledServices?.contains(expectedComponentName.flattenToString()) == true
+    }
+
+    private fun showEnableAccessibilityDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Enable Translation Service")
+            .setMessage("To use the translation overlay, please enable the accessibility service in Settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun requestOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            AlertDialog.Builder(this)
+                .setTitle("Enable Overlay Permission")
+                .setMessage("To show translations, please allow display over other apps.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    try {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setCancelable(false)
+                .show()
+        }
     }
 }
+
+
