@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph">
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.cs407.readify.LoginFragment"
+        android:label="@string/login_screen"
+        android:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_createAccountFragment"
+            app:destination="@id/createAccountFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+    <fragment
+        android:id="@+id/createAccountFragment"
+        android:name="com.cs407.readify.CreateAccountFragment"
+        android:label="@string/create_account_screen"
+        android:layout="@layout/fragment_create_account">
+        <action
+            android:id="@+id/action_createAccountFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/createAccountFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+</navigation>
