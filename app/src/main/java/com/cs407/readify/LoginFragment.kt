@@ -113,12 +113,19 @@ class LoginFragment(
         val passwd = hash(passwdPlain)
         if (userPasswdKV.contains(name)) {
             val passwdInKV = userPasswdKV.getString(name, null)
-            errorTextView.text = getString(R.string.error_invalid_login)
-            if (passwd != passwdInKV) return false
+            withContext(Dispatchers.Main) {
+                errorTextView.text = getString(R.string.error_invalid_login)
+            }
+            if (passwd != passwdInKV) {
+                return false
+            }
         } else {
-            errorTextView.text = getString(R.string.error_user_not_exist)
+            withContext(Dispatchers.Main) {
+                errorTextView.text = getString(R.string.error_user_not_exist)
+            }
             return false
         }
+        Log.d("LOGGED", "IN")
         return true
     }
 

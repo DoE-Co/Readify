@@ -46,8 +46,8 @@ class CreateAccountFragment(
         usernameEditText = view.findViewById(R.id.username_create_input)
         passwordEditText = view.findViewById(R.id.password_create_input)
         confirmPassEditText = view.findViewById(R.id.confirm_password_input)
-        loginButton = view.findViewById(R.id.create_account_button)
-        createAccountButton = view.findViewById(R.id.navigate_to_login)
+        loginButton = view.findViewById(R.id.navigate_to_login)
+        createAccountButton = view.findViewById(R.id.create_account_button)
         errorTextView = view.findViewById(R.id.errorTextView)
 
         userViewModel = if (injectedUserViewModel != null) {
@@ -84,7 +84,7 @@ class CreateAccountFragment(
             if (name.isNotBlank() && passwd.isNotBlank() && confirmPass.isNotBlank()) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     val success = withContext(Dispatchers.IO) {
-                        getUserPasswd(name, passwd, confirmPass)
+                        createUser(name, passwd, confirmPass)
                     }
                     if (success) {
                         val userId = withContext(Dispatchers.IO) {
@@ -109,27 +109,36 @@ class CreateAccountFragment(
         }
     }
 
-    private suspend fun getUserPasswd(
+    private suspend fun createUser(
         name: String,
         passwdPlain: String,
         confirmPassPlain: String
     ): Boolean {
         if (userPasswdKV.contains(name)) {
-            errorTextView.text = getString(R.string.error_user_already_exists)
+            withContext(Dispatchers.Main) {
+                errorTextView.text = getString(R.string.error_user_already_exists)
+                errorTextView.visibility = View.VISIBLE
+            }
             return false
         }
         if (passwdPlain != confirmPassPlain) {
-            errorTextView.text = getString(R.string.error_passwords_no_match)
+            withContext(Dispatchers.Main) {
+                errorTextView.text = getString(R.string.error_passwords_no_match)
+                errorTextView.visibility = View.VISIBLE
+            }
             return false
         } else {
             val passwd = hash(passwdPlain)
             withContext(Dispatchers.IO) {
-               // database.userDao().insert(User(userName = name))
+                with(userPasswdKV.edit()) {
+                    putString(name, passwd)
+                    apply()
+                }
             }
-            with(userPasswdKV.edit()) {
-                putString(name, passwd)
-                apply()
+            withContext(Dispatchers.Main) {
+                errorTextView.visibility = View.GONE
             }
+            Log.d("ACcOUNT", "CREATED")
         }
         return true
     }
