@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.content.ClipboardManager
+import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.util.Log
@@ -17,6 +18,11 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class TranslationOverlayService : AccessibilityService() {
@@ -38,6 +44,12 @@ class TranslationOverlayService : AccessibilityService() {
     private var currentSubtitleText: String? = null // Store current subtitle
     private var lastPauseCheckTime = 0L
     private val PAUSE_CHECK_COOLDOWN = 100L // milliseconds
+    private var serviceScope = CoroutineScope(Dispatchers.Default)
+    private var currentJob: Job? = null
+    private var currentLocation: String? = null
+    private var currentContext: String = "UNKNOWN"
+    private var wasInTargetApp = false
+    private val japaneseParser = JapaneseTextParser()
 
 
     override fun onServiceConnected() {
@@ -50,60 +62,141 @@ class TranslationOverlayService : AccessibilityService() {
             // Add more event types to catch lyrics updates
             eventTypes = AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
-                    AccessibilityEvent.TYPE_VIEW_CLICKED
+                    AccessibilityEvent.TYPE_VIEW_CLICKED or
+                    AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             notificationTimeout = 100
+            //packageNames = arrayOf(YOUTUBE_PACKAGE, YOUTUBE_MUSIC_PACKAGE)
         }
         this.serviceInfo = info
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        when (event.eventType) {
-            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
-                handleTextSelection(event)
+       // Log.d(TAG, "Event Type: ${event.eventType}")
+        val newContext = determineContext(event)
+//        if(currentLocation != null && currentLocation != event.packageName?.toString()) {
+//            currentJob?.cancel()
+//        }else {
+//            currentLocation = event.packageName?.toString()
+//        }
+
+        // Cancel the previous job when switching context
+// Cancel current job if context changes
+        if (newContext != currentContext) {
+            currentJob?.cancel()
+            Log.d(TAG, "Job cancelled due to context change")
+            currentContext = newContext
+            currentJob = serviceScope.launch {
+                handleContextChange(newContext, event)
             }
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                when (event.packageName?.toString()) {
-                    YOUTUBE_PACKAGE -> {
-                        Log.d("YOUTUBE", "Window content changed in YouTube")
-                        updateCurrentSubtitle(event)
+        }
+        currentJob = serviceScope.launch {
+            handleAccessibilityEvent(event, newContext)
+        }
+
+//        when (event.eventType) {
+//            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
+//                handleTextSelection(event)
+//            }
+//            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+//
+//            }
+//            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+//
+//            }
+//        }
+    }
+
+    private fun handlePackageTransition(event: AccessibilityEvent) {
+//        Log.d("YOUTUBE", "Package transition detected")
+//        Log.d("YOUTUBE", "Was in target app: $wasInTargetApp")
+//        Log.d("YOUTUBE", "Current package: ${event.packageName?.toString()}")
+//        //if the overylay is not up, then update the package but if it comes up do not update because that is readify
+//        if(overlayView != null) {
+//            return
+//        }
+//
+//        var currentPackage = event.packageName?.toString()
+//
+//        // Check if we were previously in YouTube/YouTube Music
+//        if (wasInTargetApp && currentPackage != YOUTUBE_PACKAGE && currentPackage != YOUTUBE_MUSIC_PACKAGE && currentPackage != "com.android.chrome") {
+//            // User has left YouTube/YouTube Music
+//            // Launch your main activity
+//            val launchIntent = Intent(this, MainActivity::class.java).apply {
+//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//            }
+//            startActivity(launchIntent)
+//        }
+//
+//        // Update state for next check
+//        wasInTargetApp = (currentPackage == YOUTUBE_PACKAGE || currentPackage == YOUTUBE_MUSIC_PACKAGE || currentPackage == "com.android.chrome")
+    }
+
+    private suspend fun handleAccessibilityEvent(event: AccessibilityEvent, context: String) {
+        when (context) {
+            "TEXT_SELECTION" -> handleTextSelection(event)
+            "WINDOW_CONTENT" -> handleWindowContentChanged(event)
+            "VIEW_CLICKED" -> handleViewClicked(event)
+            "WINDOW_STATE" -> handlePackageTransition(event)
+        }
+    }
+
+    private fun handleViewClicked(event: AccessibilityEvent) {
+        when (event.packageName?.toString()) {
+            YOUTUBE_PACKAGE -> {
+                CoroutineScope(Dispatchers.Default).launch {
+                    val oldPauseState = isVideoPaused
+                    updateVideoPauseState(event.source)
+
+                    if (isVideoPaused && !oldPauseState) {
+                        Log.d("YOUTUBE", "Video just paused. Current subtitle: $currentSubtitleText")
+                        if (!currentSubtitleText.isNullOrEmpty()) {
+                            Log.d("YOUTUBE", "About to show overlay with: $currentSubtitleText")
+                            safeShowTranslationOverlay(currentSubtitleText!!)
+                        } else {
+                            Log.d("YOUTUBE", "No subtitle text available to show")
+                        }
+                    } else if (!isVideoPaused && oldPauseState) {
+                        Log.d("YOUTUBE", "Video unpaused, removing overlay")
+                        removeExistingOverlay()
                     }
                 }
-            }
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
-                when (event.packageName?.toString()) {
-                    YOUTUBE_PACKAGE -> {
-                        val oldPauseState = isVideoPaused
-                        updateVideoPauseState(event.source)
 
-                        if (isVideoPaused && !oldPauseState) {
-                            Log.d("YOUTUBE", "Video just paused. Current subtitle: $currentSubtitleText")
-                            if (!currentSubtitleText.isNullOrEmpty()) {
-                                Log.d("YOUTUBE", "About to show overlay with: $currentSubtitleText")
-                                safeShowTranslationOverlay(currentSubtitleText!!)
-                            } else {
-                                Log.d("YOUTUBE", "No subtitle text available to show")
-                            }
-                        } else if (!isVideoPaused && oldPauseState) {
-                            Log.d("YOUTUBE", "Video unpaused, removing overlay")
-                            removeExistingOverlay()
-                        }
-                    }
-                    YOUTUBE_MUSIC_PACKAGE -> {
-                        val currentTime = System.currentTimeMillis()
-                        if (currentTime - lastProcessedTime < COOLDOWN_MS) {
-                            return
-                        }
-                        handleYoutubeMusicLyrics(event)
-                    }
+            }
+            YOUTUBE_MUSIC_PACKAGE -> {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastProcessedTime < COOLDOWN_MS) {
+                    return
+                }
+                CoroutineScope(Dispatchers.Default).launch {
+                    handleYoutubeMusicLyrics(event)
                 }
             }
         }
     }
 
-    private fun safeShowTranslationOverlay(text: String) {
+    private fun handleWindowContentChanged(event: AccessibilityEvent) {
+        when (event.packageName?.toString()) {
+            YOUTUBE_PACKAGE -> {
+                Log.d("YOUTUBE", "Window content changed in YouTube")
+                CoroutineScope(Dispatchers.Default).launch {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastPauseCheckTime < PAUSE_CHECK_COOLDOWN) {
+                        return@launch
+                    }
+                    lastPauseCheckTime = currentTime
+                    //updateVideoPauseState(event.source)
+                    updateCurrentSubtitle(event)
+                }
+                //updateCurrentSubtitle(event)
+            }
+        }
+    }
+
+
+    private suspend fun safeShowTranslationOverlay(text: String) {
         Log.d("YOUTUBE", "safeShowTranslationOverlay called with text: $text")
         if (text.isBlank()) {
             Log.d("YOUTUBE", "Attempted to show empty text overlay")
@@ -111,14 +204,42 @@ class TranslationOverlayService : AccessibilityService() {
         }
 
         if (overlayView != null) {
-            overlayView?.apply {
-                Log.d("YOUTUBE", "Updating existing overlay with text: $text")
-                findViewById<TextView>(R.id.originalText).text = text
-                findViewById<TextView>(R.id.translatedText).text = simulateTranslation(text)
+            withContext(Dispatchers.Main) {
+                overlayView?.apply {
+                    Log.d("YOUTUBE", "Updating existing overlay with text: $text")
+                    findViewById<TextView>(R.id.originalText).text = text
+                    findViewById<TextView>(R.id.translatedText).text = simulateTranslation(text)
+                }
             }
+
         } else {
             Log.d("YOUTUBE", "Creating new overlay with text: $text")
-            showTranslationOverlay(text)
+            withContext(Dispatchers.Main) {
+                showTranslationOverlay(text)
+            }
+            //showTranslationOverlay(text)
+        }
+    }
+
+    private suspend fun handleContextChange(newContext: String, event: AccessibilityEvent) {
+        when (newContext) {
+            "TEXT_SELECTION" -> handleTextSelection(event)
+            "WINDOW_CONTENT" -> handleWindowContentChanged(event)
+            "VIEW_CLICKED" -> handleViewClicked(event)
+            "WINDOW_STATE" -> handlePackageTransition(event)
+        }
+    }
+
+    private fun determineContext(event: AccessibilityEvent): String {
+        // First check for package transitions
+      //  handlePackageTransition(event)
+
+        return when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> "TEXT_SELECTION"
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT"
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> "VIEW_CLICKED"
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE"
+            else -> "UNKNOWN"
         }
     }
 
@@ -171,46 +292,46 @@ class TranslationOverlayService : AccessibilityService() {
         }
     }
 
-    private fun handleYoutubeSubtitles(event: AccessibilityEvent) {
-        try {
-            if (!isVideoPaused) return
+//    private fun handleYoutubeSubtitles(event: AccessibilityEvent) {
+//        try {
+//            if (!isVideoPaused) return
+//
+//            val rootNode = event.source ?: return
+//            findSubtitles(rootNode)
+//            rootNode.recycle()
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Error processing subtitles: ${e.message}")
+//        }
+//    }
 
-            val rootNode = event.source ?: return
-            findSubtitles(rootNode)
-            rootNode.recycle()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error processing subtitles: ${e.message}")
-        }
-    }
-
-    private fun findSubtitles(node: AccessibilityNodeInfo?) {
-        if (node == null) return
-
-        try {
-            if (node.className == "android.view.View" && !node.isClickable) {
-                val text = node.text?.toString() ?: return
-                if (containsJapaneseText(text) && text != lastSelectedText) {
-                    lastSelectedText = text
-                    Log.d("YOUTUBE", "Found Japanese subtitle when paused: $text")
-                    japaneseWords = extractJapaneseWords(text)
-                    currentWordIndex = 0
-
-                    if (japaneseWords.isNotEmpty()) {
-                        showTranslationOverlay(japaneseWords[0])
-                    }
-                }
-            }
-
-            // Check children
-            for (i in 0 until node.childCount) {
-                val child = node.getChild(i)
-                findSubtitles(child)
-                child?.recycle()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error finding subtitles: ${e.message}")
-        }
-    }
+//    private fun findSubtitles(node: AccessibilityNodeInfo?) {
+//        if (node == null) return
+//
+//        try {
+//            if (node.className == "android.view.View" && !node.isClickable) {
+//                val text = node.text?.toString() ?: return
+//                if (containsJapaneseText(text) && text != lastSelectedText) {
+//                    lastSelectedText = text
+//                    Log.d("YOUTUBE", "Found Japanese subtitle when paused: $text")
+//                    japaneseWords = extractJapaneseWords(text)
+//                    currentWordIndex = 0
+//
+//                    if (japaneseWords.isNotEmpty()) {
+//                        safeShowTranslationOverlay(japaneseWords[0])
+//                    }
+//                }
+//            }
+//
+//            // Check children
+//            for (i in 0 until node.childCount) {
+//                val child = node.getChild(i)
+//                findSubtitles(child)
+//                child?.recycle()
+//            }
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Error finding subtitles: ${e.message}")
+//        }
+//    }
 
     private fun handleTextSelection(event: AccessibilityEvent) {
         try {
@@ -230,8 +351,9 @@ class TranslationOverlayService : AccessibilityService() {
                 } else {
                     0 // Fallback to first word if no position info
                 }
-
-                showTranslationOverlay(japaneseWords[currentWordIndex])
+                CoroutineScope(Dispatchers.Main).launch {
+                    safeShowTranslationOverlay(japaneseWords[currentWordIndex])
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error processing selection: ${e.message}")
@@ -257,7 +379,7 @@ class TranslationOverlayService : AccessibilityService() {
         return closestIndex
     }
 
-    private fun handleYoutubeMusicLyrics(event: AccessibilityEvent) {
+    private suspend fun handleYoutubeMusicLyrics(event: AccessibilityEvent) {
         try {
             val source = event.source ?: return
             if (source.className == "android.view.ViewGroup" && source.isClickable) {
@@ -269,7 +391,7 @@ class TranslationOverlayService : AccessibilityService() {
                     currentWordIndex = 0
 
                     if (japaneseWords.isNotEmpty()) {
-                        showTranslationOverlay(japaneseWords[0])
+                        safeShowTranslationOverlay(japaneseWords[0])
                     }
                 }
             }
@@ -295,6 +417,7 @@ class TranslationOverlayService : AccessibilityService() {
         val words = mutableListOf<String>()
         var currentWord = StringBuilder()
 
+        //TODO: either remove this logic and just use the tokenizer or fix it for edge cases
         for (char in text) {
             if (isJapaneseChar(char)) {
                 currentWord.append(char)
@@ -306,6 +429,17 @@ class TranslationOverlayService : AccessibilityService() {
 
         if (currentWord.isNotEmpty()) {
             words.add(currentWord.toString())
+        }
+        Log.d(TAG, "Extracted words: $words")
+        var tokens = japaneseParser.parseText(words.joinToString(" "))
+        Log.d(TAG, "Parsed tokens: ${tokens}")
+        tokens = japaneseParser.combineTokens(tokens)
+        Log.d(TAG, "Combined Parsed tokens: ${tokens}")
+        words.clear()
+        for (token in tokens) {
+            if(token.baseForm != "*") {
+                words.add(token.surface)
+            }
         }
 
         return words
@@ -470,6 +604,16 @@ class TranslationOverlayService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
+        Log.d(TAG, "Accessibility service interrupted")
+        currentJob?.cancel()
         removeExistingOverlay()
     }
+
+    override fun onDestroy() {
+        Log.d(TAG, "Service destroyed")
+        super.onDestroy()
+        currentJob?.cancel()
+        removeExistingOverlay()
+    }
+
 }

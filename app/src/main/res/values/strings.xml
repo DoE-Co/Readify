@@ -23,4 +23,6 @@
     <string name="japanese_highlighter_service_description">Highlights Japanese text in different colors to help with reading</string>
     <string name="text_detector_service_label">Text Detector</string>
     <string name="text_detector_service_description">Detects and logs text content from apps</string>
+    <string name="youtube_music_translation_service_description">Translates Japanese lyrics in YouTube Music. Tap on lyrics to see word-by-word translations.</string>
+    <string name="youtube_music_service_label">Readify YouTube Music Translation</string>
 </resources>
