@@ -7,8 +7,8 @@
     <string name="camera" />
     <string name="world" />
     <string name="add_word" />
-    <string name="name">Name:</string>
-    <string name="email">Email:</string>
+    <string name="name">Group Name: READIFY</string>
+    <string name="email">Group Members: Zaliss, DoE-Co,  Kanaan88, SahitReddy2</string>
     <string name="search_a_word">Search a word</string>
     <string name="error_invalid_login">Username or Password is incorrect</string>
     <string name="error_passwords_no_match">Passwords don\'t match</string>
@@ -17,4 +17,6 @@
     <string name="userPasswdKV">com.cs407.readify.userPasswdKV</string>
     <string name="login_screen">LoginScreen</string>
     <string name="create_account_screen">createAccountScreen</string>
+    <string name="home_screen" />
+    <string name="return_to_homefragment">Return to HomeFragment</string>
 </resources>
