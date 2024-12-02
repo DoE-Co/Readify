@@ -13,9 +13,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-//Add these when Database is created
-//import com.cs407.readify.data.Database
-//import com.cs407.readify.data.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,13 +31,11 @@ class CreateAccountFragment(
 
     private lateinit var userViewModel: UserViewModel
     private lateinit var userPasswdKV: SharedPreferences
-    //Add this when Database is created
-    //private lateinit var database: Database
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ): View? {
         val view = inflater.inflate(R.layout.fragment_create_account, container, false)
 
         usernameEditText = view.findViewById(R.id.username_create_input)
@@ -50,30 +45,19 @@ class CreateAccountFragment(
         createAccountButton = view.findViewById(R.id.create_account_button)
         errorTextView = view.findViewById(R.id.errorTextView)
 
-        userViewModel = if (injectedUserViewModel != null) {
-            injectedUserViewModel
-        } else {
-            ViewModelProvider(requireActivity())[UserViewModel::class.java]
-        }
+        userViewModel = injectedUserViewModel ?: ViewModelProvider(requireActivity())[UserViewModel::class.java]
 
         // Initialize SharedPreferences
-        userPasswdKV = requireContext().getSharedPreferences(getString(R.string.userPasswdKV), Context.MODE_PRIVATE)
-
-        // Initialize Database
-        //Add this when Database is created
-        //database = Database.getDatabase(requireContext())
+        userPasswdKV = requireActivity().getSharedPreferences(getString(R.string.userPasswdKV), Context.MODE_PRIVATE)
 
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // Hide error message when user types in either field
-        usernameEditText.doAfterTextChanged {
-            errorTextView.visibility = View.GONE
-        }
-        passwordEditText.doAfterTextChanged {
-            errorTextView.visibility = View.GONE
-        }
+        // Hide error message when user types in any field
+        usernameEditText.doAfterTextChanged { errorTextView.visibility = View.GONE }
+        passwordEditText.doAfterTextChanged { errorTextView.visibility = View.GONE }
+        confirmPassEditText.doAfterTextChanged { errorTextView.visibility = View.GONE }
 
         // Set the create account button click action
         createAccountButton.setOnClickListener {
@@ -83,27 +67,20 @@ class CreateAccountFragment(
 
             if (name.isNotBlank() && passwd.isNotBlank() && confirmPass.isNotBlank()) {
                 viewLifecycleOwner.lifecycleScope.launch {
-                    val success = withContext(Dispatchers.IO) {
-                        createUser(name, passwd, confirmPass)
-                    }
+                    val success = createUser(name, passwd, confirmPass)
                     if (success) {
-                        val userId = withContext(Dispatchers.IO) {
-                            //Add this when Database is created
-                            //val user = noteDB.userDao().getByName(name)
-                            //user.userId
+                        userViewModel.setUser(UserState(0, name, passwd))
+                        withContext(Dispatchers.Main) {
+                            findNavController().navigate(R.id.action_createAccountFragment_to_homeFragment)
                         }
-                        // Set the logged-in user in the UserViewModel
-                        //userViewModel.setUser(UserState(userId, name, passwd))
-
-                        //findNavController().navigate(R.id.action_createAccountFragment_to_homefragment)
-                    } else {
-                        errorTextView.visibility = View.VISIBLE
                     }
                 }
             } else {
+                errorTextView.text = "All fields are required."
                 errorTextView.visibility = View.VISIBLE
             }
         }
+
         loginButton.setOnClickListener {
             findNavController().navigate(R.id.action_createAccountFragment_to_loginFragment)
         }
@@ -114,6 +91,10 @@ class CreateAccountFragment(
         passwdPlain: String,
         confirmPassPlain: String
     ): Boolean {
+        // Log SharedPreferences keys before creating a user
+        val allUsers = userPasswdKV.all
+        Log.d("CreateAccountFragment", "Existing users: $allUsers")
+
         if (userPasswdKV.contains(name)) {
             withContext(Dispatchers.Main) {
                 errorTextView.text = getString(R.string.error_user_already_exists)
@@ -129,22 +110,20 @@ class CreateAccountFragment(
             return false
         } else {
             val passwd = hash(passwdPlain)
+            // Save the new user
             withContext(Dispatchers.IO) {
-                with(userPasswdKV.edit()) {
-                    putString(name, passwd)
-                    apply()
-                }
+                userPasswdKV.edit().putString(name, passwd).apply()
             }
             withContext(Dispatchers.Main) {
                 errorTextView.visibility = View.GONE
             }
-            Log.d("ACcOUNT", "CREATED")
+            Log.d("CreateAccountFragment", "Account created for user: $name")
         }
         return true
     }
 
     private fun hash(input: String): String {
         return MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
-            .fold("") { str, it -> str + "%02x".format(it) }
+            .joinToString("") { "%02x".format(it) }
     }
 }
