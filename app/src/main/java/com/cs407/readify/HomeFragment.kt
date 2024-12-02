@@ -7,10 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.Toast
 import androidx.cardview.widget.CardView
 import com.cs407.readify.databinding.FragmentHomeBinding
-import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.fragment.findNavController
 
 
