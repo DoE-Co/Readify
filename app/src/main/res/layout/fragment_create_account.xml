@@ -3,7 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@drawable/gradient_background">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome to Readify"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp" />
 
     <TextView
         android:id="@+id/errorTextView"
@@ -19,9 +32,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Create Account"
-        android:textSize="24sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:gravity="center"
+        android:textColor="@android:color/white"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="24dp" />
 
@@ -31,31 +45,38 @@
         android:layout_height="wrap_content"
         android:hint="Username"
         android:inputType="text"
-        android:minHeight="48dp" />
+        android:background="@drawable/rounded_edittext"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
 
     <EditText
         android:id="@+id/password_create_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:hint="Password"
         android:inputType="textPassword"
-        android:minHeight="48dp" />
+        android:background="@drawable/rounded_edittext"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
 
     <EditText
         android:id="@+id/confirm_password_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:hint="Confirm Password"
         android:inputType="textPassword"
-        android:minHeight="48dp" />
+        android:background="@drawable/rounded_edittext"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp" />
 
     <Button
         android:id="@+id/create_account_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Create Account"
+        android:background="@drawable/rounded_button"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         android:layout_marginTop="24dp" />
 
     <Button
@@ -63,5 +84,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Login"
+        android:background="@drawable/rounded_button_outline"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         android:layout_marginTop="8dp" />
 </LinearLayout>
