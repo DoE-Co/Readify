@@ -1,5 +1,6 @@
 package com.cs407.readify
 
+
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -11,10 +12,17 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
 
         // Check permissions immediately
@@ -39,28 +47,28 @@ class MainActivity : AppCompatActivity() {
             showTranslationBottomSheet("こんにちは")
         }
 
-        val youtubeButton = findViewById<Button>(R.id.youtubeButton)
-        youtubeButton.setOnClickListener {
-//            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
-//            startActivity(intent)
-              showYoutubeUrlDialog()
-        }
-    }
+//         val youtubeButton = findViewById<Button>(R.id.youtubeButton)
+//         youtubeButton.setOnClickListener {
+// //            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
+// //            startActivity(intent)
+//               showYoutubeUrlDialog()
+//         }
+//     }
 
-    private fun showYoutubeUrlDialog(){
-        val youtubeLinkBottomSheet = YouTubeLinkBottomSheet.newInstance()
-        youtubeLinkBottomSheet.setOnLinkSubmittedListener { url ->
-            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
-            intent.putExtra("videoUrl", url)
-            startActivity(intent)
-        }
-        youtubeLinkBottomSheet.show(supportFragmentManager, "youtube_link")
-    }
+//     private fun showYoutubeUrlDialog(){
+//         val youtubeLinkBottomSheet = YouTubeLinkBottomSheet.newInstance()
+//         youtubeLinkBottomSheet.setOnLinkSubmittedListener { url ->
+//             val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
+//             intent.putExtra("videoUrl", url)
+//             startActivity(intent)
+//         }
+//         youtubeLinkBottomSheet.show(supportFragmentManager, "youtube_link")
+//     }
 
-    private fun showTranslationBottomSheet(text: String) {
-        TestTranslationBottomSheet.newInstance(text)
-            .show(supportFragmentManager, "translation")
-    }
+//     private fun showTranslationBottomSheet(text: String) {
+//         TestTranslationBottomSheet.newInstance(text)
+//             .show(supportFragmentManager, "translation")
+//     }
 
     private fun handleIncomingText() {
         when (intent?.action) {
@@ -142,6 +150,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 .setCancelable(false)
                 .show()
+
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+
         }
     }
 }

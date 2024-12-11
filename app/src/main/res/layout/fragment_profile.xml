@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+
     <!-- Display Name -->
     <TextView
         android:id="@+id/nameTextView"
@@ -13,12 +14,30 @@
         android:text="@string/name"
         android:textSize="18sp" />
 
-    <!-- Display Email -->
+    <!-- Display Members -->
     <TextView
         android:id="@+id/emailTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/email"
         android:textSize="18sp" />
+
+    <!-- Display Image -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1"
+        android:src="@drawable/happy_holiday"
+        android:scaleType="centerCrop" />
+
+    <!-- Button to navigate to HomeFragment -->
+    <Button
+        android:id="@+id/goToHomeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/return_to_homefragment"
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>

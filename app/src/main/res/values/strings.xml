@@ -1,14 +1,12 @@
 <resources>
     <string name="app_name">Readify</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="settings">Settings</string>
     <string name="profile">Profile</string>
-    <string name="camera" />
-    <string name="world" />
-    <string name="add_word" />
-    <string name="name">Name:</string>
-    <string name="email">Email:</string>
+    <string name="camera"/>
+    <string name="world"/>
+    <string name="add_word"/>
+    <string name="name">Group Name: READIFY</string>
+    <string name="email">Group Members: Zaliss, DoE-Co, Kanaan88, SahitReddy2</string>
     <string name="search_a_word">Search a word</string>
     <string name="error_invalid_login">Username or Password is incorrect</string>
     <string name="error_passwords_no_match">Passwords don\'t match</string>
@@ -16,6 +14,7 @@
     <string name="error_user_already_exists">Username already exists</string>
     <string name="userPasswdKV">com.cs407.readify.userPasswdKV</string>
     <string name="login_screen">LoginScreen</string>
+
     <string name="create_account_screen">createAccountScreen</string>
     <string name="accessibility_service_description">Translates selected text on screen</string>
     <string name="japanese_highlighter_service_label">Japanese Text Highlighter</string>
@@ -25,4 +24,10 @@
     <string name="text_detector_service_description">Detects and logs text content from apps</string>
     <string name="youtube_music_translation_service_description">Translates Japanese lyrics in YouTube Music. Tap on lyrics to see word-by-word translations.</string>
     <string name="youtube_music_service_label">Readify YouTube Music Translation</string>
+
+
+    <string name="create_account_screen">CreateAccountScreen</string>
+    <string name="home_screen">Home</string>
+    <string name="return_to_homefragment">Return to HomeFragment</string>
 </resources>
+
