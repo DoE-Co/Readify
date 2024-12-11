@@ -517,33 +517,39 @@ class TranslationOverlayService : AccessibilityService() {
                 removeExistingOverlay()
             }
 
-            // Make overlay draggable
-            setOnTouchListener(object : View.OnTouchListener {
-                private var initialX: Int = 0
-                private var initialY: Int = 0
-                private var initialTouchX: Float = 0f
-                private var initialTouchY: Float = 0f
+            // Only enable dragging in portrait mode
+            val orientation = resources.configuration.orientation
+            if (orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+                setOnTouchListener(object : View.OnTouchListener {
+                    private var initialX: Int = 0
+                    private var initialY: Int = 0
+                    private var initialTouchX: Float = 0f
+                    private var initialTouchY: Float = 0f
 
-                @SuppressLint("ClickableViewAccessibility")
-                override fun onTouch(v: View?, event: MotionEvent): Boolean {
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            initialX = params.x
-                            initialY = params.y
-                            initialTouchX = event.rawX
-                            initialTouchY = event.rawY
-                            return true
+                    @SuppressLint("ClickableViewAccessibility")
+                    override fun onTouch(v: View?, event: MotionEvent): Boolean {
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                initialX = params.x
+                                initialY = params.y
+                                initialTouchX = event.rawX
+                                initialTouchY = event.rawY
+                                return true
+                            }
+                            MotionEvent.ACTION_MOVE -> {
+                                params.x = initialX + (event.rawX - initialTouchX).toInt()
+                                params.y = initialY + (event.rawY - initialTouchY).toInt()
+                                windowManager?.updateViewLayout(overlayView, params)
+                                return true
+                            }
                         }
-                        MotionEvent.ACTION_MOVE -> {
-                            params.x = initialX + (event.rawX - initialTouchX).toInt()
-                            params.y = initialY + (event.rawY - initialTouchY).toInt()
-                            windowManager?.updateViewLayout(overlayView, params)
-                            return true
-                        }
+                        return false
                     }
-                    return false
-                }
-            })
+                })
+            } else {
+                // Remove touch listener in landscape mode
+                setOnTouchListener(null)
+            }
         }
 
         try {
