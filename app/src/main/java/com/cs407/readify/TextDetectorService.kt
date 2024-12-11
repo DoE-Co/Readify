@@ -53,26 +53,22 @@ class TextDetectorService : AccessibilityService() {
         if (node == null) return
 
         try {
-            // Log text content if present
-            if (!node.text.isNullOrEmpty()) {
-                val indent = " ".repeat(depth * 2)
-                Log.d(TAG, "$indent→ Found text: '${node.text}'")
-                Log.d(TAG, "$indent  Class: ${node.className}")
-                Log.d(TAG, "$indent  Clickable: ${node.isClickable}")
-                Log.d(TAG, "$indent  Editable: ${node.isEditable}")
-                Log.d(TAG, "$indent  Selected: ${node.isSelected}")
-            }
+            // Log ALL nodes, not just ones with text
+            val indent = " ".repeat(depth * 2)
+            Log.d(TAG, "$indent→ Node Class: ${node.className}")
+            Log.d(TAG, "$indent  Text: '${node.text}'")
+            Log.d(TAG, "$indent  ContentDescription: '${node.contentDescription}'")
+            Log.d(TAG, "$indent  ViewId: '${node.viewIdResourceName}'")
+            Log.d(TAG, "$indent  Clickable: ${node.isClickable}")
+            Log.d(TAG, "$indent  Visible: ${node.isVisibleToUser}")
 
-            // Check view type
+            // Special check for specific view types that might be used for subtitles
             when (node.className) {
-                "android.widget.EditText" -> {
-                    Log.d(TAG, "Found EditText with text: ${node.text}")
-                }
-                "android.widget.TextView" -> {
-                    Log.d(TAG, "Found TextView with text: ${node.text}")
-                }
-                "android.widget.Button" -> {
-                    Log.d(TAG, "Found Button with text: ${node.text}")
+                "android.view.View",
+                "android.widget.TextView",
+                "android.widget.FrameLayout",
+                "android.view.ViewGroup" -> {
+                    Log.d(TAG, "$indent  Potential subtitle container found")
                 }
             }
 
@@ -83,7 +79,6 @@ class TextDetectorService : AccessibilityService() {
         } catch (e: Exception) {
             Log.e(TAG, "Error processing node: ${e.message}")
         } finally {
-            // Don't recycle the root node as it's managed by the system
             if (depth > 0) {
                 node.recycle()
             }

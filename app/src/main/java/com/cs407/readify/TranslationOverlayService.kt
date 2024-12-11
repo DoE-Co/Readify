@@ -31,6 +31,7 @@ class TranslationOverlayService : AccessibilityService() {
         private const val TAG = "TranslationService"
         private const val YOUTUBE_MUSIC_PACKAGE = "com.google.android.apps.youtube.music"
         private const val YOUTUBE_PACKAGE = "com.google.android.youtube"
+        private const val AMAZON_PRIME_PACKAGE = "com.amazon.avod.thirdpartyclient"
     }
 
     private var windowManager: WindowManager? = null
@@ -175,6 +176,21 @@ class TranslationOverlayService : AccessibilityService() {
                     handleYoutubeMusicLyrics(event)
                 }
             }
+            AMAZON_PRIME_PACKAGE -> {
+                CoroutineScope(Dispatchers.Default).launch {
+                    val oldPauseState = isVideoPaused
+                    updateVideoPauseState(event.source)
+
+                    if (isVideoPaused && !oldPauseState) {
+                        Log.d("STREAMING", "Video just paused. Current subtitle: $currentSubtitleText")
+                        if (!currentSubtitleText.isNullOrEmpty()) {
+                            safeShowTranslationOverlay(currentSubtitleText!!)
+                        }
+                    } else if (!isVideoPaused && oldPauseState) {
+                        removeExistingOverlay()
+                    }
+                }
+            }
         }
     }
 
@@ -188,13 +204,23 @@ class TranslationOverlayService : AccessibilityService() {
                         return@launch
                     }
                     lastPauseCheckTime = currentTime
-                    //updateVideoPauseState(event.source)
                     updateCurrentSubtitle(event)
                 }
-                //updateCurrentSubtitle(event)
+            }
+            AMAZON_PRIME_PACKAGE -> {
+                Log.d("PRIME", "Window content changed in Prime Video")
+                CoroutineScope(Dispatchers.Default).launch {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastPauseCheckTime < PAUSE_CHECK_COOLDOWN) {
+                        return@launch
+                    }
+                    lastPauseCheckTime = currentTime
+                    updateCurrentSubtitle(event)
+                }
             }
         }
     }
+
 
 
     private suspend fun safeShowTranslationOverlay(text: String) {
@@ -296,16 +322,22 @@ class TranslationOverlayService : AccessibilityService() {
         if (node == null) return
 
         try {
-            if (node.className == "android.view.View" && !node.isClickable) {
+            // Different apps might use different view classes for subtitles
+            val isSubtitleView = when (node.packageName?.toString()) {
+                YOUTUBE_PACKAGE -> node.className == "android.view.View" && !node.isClickable
+                AMAZON_PRIME_PACKAGE -> node.className == "android.widget.TextView" && !node.isClickable
+                else -> false
+            }
+
+            if (isSubtitleView) {
                 val text = node.text?.toString()
                 if (!text.isNullOrEmpty() && containsJapaneseText(text)) {
-                    // Only add if this text isn't a substring of an existing candidate
                     val isSubstring = candidates.any { candidate ->
                         candidate.text.contains(text) && candidate.text != text
                     }
 
                     if (!isSubstring) {
-                        Log.d("YOUTUBE", "Found candidate subtitle: $text at level $level")
+                        Log.d("STREAMING", "Found candidate subtitle: $text at level $level")
                         candidates.add(SubtitleCandidate(
                             text = text,
                             level = level,
@@ -315,25 +347,30 @@ class TranslationOverlayService : AccessibilityService() {
                 }
             }
 
+            // Continue checking children
             for (i in 0 until node.childCount) {
                 val child = node.getChild(i)
                 findSubtitleCandidates(child, level + 1, candidates)
                 child?.recycle()
             }
         } catch (e: Exception) {
-            Log.e("YOUTUBE", "Error finding subtitle: ${e.message}")
+            Log.e("STREAMING", "Error finding subtitle: ${e.message}")
         }
     }
 
     private fun updateVideoPauseState(rootNode: AccessibilityNodeInfo?) {
         try {
             rootNode?.let { node ->
-                // Only look for play button (visible when paused)
-                isVideoPaused = node.findAccessibilityNodeInfosByText("Play").isNotEmpty()
-                Log.d("YOUTUBE", "Video pause state updated: $isVideoPaused")
+                isVideoPaused = when (node.packageName?.toString()) {
+                    YOUTUBE_PACKAGE -> node.findAccessibilityNodeInfosByText("Play").isNotEmpty()
+                    AMAZON_PRIME_PACKAGE -> node.findAccessibilityNodeInfosByText("Play").isNotEmpty() ||
+                            node.findAccessibilityNodeInfosByText("再生").isNotEmpty()
+                    else -> false
+                }
+                Log.d("STREAMING", "Video pause state updated: $isVideoPaused")
             }
         } catch (e: Exception) {
-            Log.e("YOUTUBE", "Error checking video state: ${e.message}")
+            Log.e("STREAMING", "Error checking video state: ${e.message}")
         }
     }
 
