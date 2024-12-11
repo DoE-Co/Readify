@@ -149,7 +149,7 @@ class CameraFragment : Fragment() {
             .build()
 
         val translator = Translation.getClient(options)
-        val conditions = DownloadConditions.Builder().requireWifi().build()
+        val conditions = DownloadConditions.Builder().build()
 
         translator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
