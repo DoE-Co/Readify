@@ -12,9 +12,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -42,10 +40,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Simulate receiving text from browser
-        val testButton = findViewById<Button>(R.id.testButton)
-        testButton.setOnClickListener {
-            showTranslationBottomSheet("こんにちは")
-        }
+//        val testButton = findViewById<Button>(R.id.testButton)
+//        testButton.setOnClickListener {
+//            showTranslationBottomSheet("こんにちは")
+//        }
 
 //         val youtubeButton = findViewById<Button>(R.id.youtubeButton)
 //         youtubeButton.setOnClickListener {
@@ -65,10 +63,19 @@ class MainActivity : AppCompatActivity() {
 //         youtubeLinkBottomSheet.show(supportFragmentManager, "youtube_link")
 //     }
 
-//     private fun showTranslationBottomSheet(text: String) {
-//         TestTranslationBottomSheet.newInstance(text)
-//             .show(supportFragmentManager, "translation")
-//     }
+
+
+
+
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+
+        }
+    }
 
     private fun handleIncomingText() {
         when (intent?.action) {
@@ -91,6 +98,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun showTranslationBottomSheet(text: String) {
+        TestTranslationBottomSheet.newInstance(text)
+            .show(supportFragmentManager, "translation")
+    }
 
 
     private fun checkAndRequestPermissions() {
@@ -150,14 +162,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 .setCancelable(false)
                 .show()
-
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-
         }
     }
 }
