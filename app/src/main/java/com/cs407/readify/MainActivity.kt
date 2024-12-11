@@ -18,14 +18,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // Check permissions immediately
-        checkAndRequestPermissions()
+        //checkAndRequestPermissions()
 
         // Handle text from browser selection
         handleIncomingText()
 
         // Check if accessibility service is enabled
         if (!isAccessibilityServiceEnabled()) {
-            showEnableAccessibilityDialog()
+            //showEnableAccessibilityDialog()
         }
 
         // Check for overlay permission
@@ -38,6 +38,23 @@ class MainActivity : AppCompatActivity() {
         testButton.setOnClickListener {
             showTranslationBottomSheet("こんにちは")
         }
+
+        val youtubeButton = findViewById<Button>(R.id.youtubeButton)
+        youtubeButton.setOnClickListener {
+//            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
+//            startActivity(intent)
+              showYoutubeUrlDialog()
+        }
+    }
+
+    private fun showYoutubeUrlDialog(){
+        val youtubeLinkBottomSheet = YouTubeLinkBottomSheet.newInstance()
+        youtubeLinkBottomSheet.setOnLinkSubmittedListener { url ->
+            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
+            intent.putExtra("videoUrl", url)
+            startActivity(intent)
+        }
+        youtubeLinkBottomSheet.show(supportFragmentManager, "youtube_link")
     }
 
     private fun showTranslationBottomSheet(text: String) {
@@ -71,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private fun checkAndRequestPermissions() {
         // Check if accessibility service is enabled
         if (!isAccessibilityServiceEnabled()) {
-            showEnableAccessibilityDialog()
+            //showEnableAccessibilityDialog()
         }
 
         // Check overlay permission
@@ -91,21 +108,21 @@ class MainActivity : AppCompatActivity() {
         return enabledServices?.contains(expectedComponentName.flattenToString()) == true
     }
 
-    private fun showEnableAccessibilityDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Enable Translation Service")
-            .setMessage("To use the translation overlay, please enable the accessibility service in Settings.")
-            .setPositiveButton("Open Settings") { _, _ ->
-                try {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setCancelable(false)
-            .show()
-    }
+//    private fun showEnableAccessibilityDialog() {
+//        AlertDialog.Builder(this)
+//            .setTitle("Enable Translation Service")
+//            .setMessage("To use the translation overlay, please enable the accessibility service in Settings.")
+//            .setPositiveButton("Open Settings") { _, _ ->
+//                try {
+//                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+//                    startActivity(intent)
+//                } catch (e: Exception) {
+//                    Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//            .setCancelable(false)
+//            .show()
+//    }
 
     private fun requestOverlayPermission() {
         if (!Settings.canDrawOverlays(this)) {

@@ -11,6 +11,10 @@
         <style name="Theme.Readify" parent="Base.Theme.Readify" />
 
 
+    <style name="Theme.Readify.YoutubePlayer" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Your theme customizations -->
+    </style>
+
 
     <style name="Theme.TransparentActivity" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>

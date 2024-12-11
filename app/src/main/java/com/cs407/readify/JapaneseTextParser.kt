@@ -117,7 +117,7 @@ class JapaneseTextParser {
                 partOfSpeech2 = first.partOfSpeech2,
                 partOfSpeech3 = first.partOfSpeech3,
                 partOfSpeech4 = first.partOfSpeech4,
-                baseForm = first.baseForm + second.baseForm,
+                baseForm = first.baseForm, // + second.baseForm,
                 pronunciation = first.pronunciation + second.pronunciation,
                 conjugationForm = second.conjugationForm,
                 conjugationType = first.conjugationType

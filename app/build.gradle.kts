@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.kapt")  // Change this line
 }
 
 android {
@@ -72,10 +73,18 @@ dependencies {
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.material)
+    implementation ("com.google.android.material:material:1.11.0")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation ("com.google.android.material:material:1.6.0")
     implementation ("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
     implementation ("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+
+    //ROOM
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
+    kapt("androidx.room:room-compiler:${libs.versions.roomCommon.get()}")  // Add this line
+
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -84,6 +93,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+   // ksp("androidx.room:room-compiler:2.5.0") // KSP for Room
 
 
 }

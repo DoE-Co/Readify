@@ -37,11 +37,11 @@ class TranslationOverlayService : AccessibilityService() {
     private var overlayView: View? = null
     private var lastSelectedText: String? = null
     private var currentWordIndex = 0
-    private var japaneseWords = listOf<String>()
+    private var japaneseWords = listOf<JapaneseWord>()
     private var lastProcessedTime = 0L
     private val COOLDOWN_MS = 1000 // 1 second cooldown
     private var isVideoPaused = false
-    private var currentSubtitleText: String? = null // Store current subtitle
+    private var currentSubtitleText: String = "" // Store current subtitle
     private var lastPauseCheckTime = 0L
     private val PAUSE_CHECK_COOLDOWN = 100L // milliseconds
     private var serviceScope = CoroutineScope(Dispatchers.Default)
@@ -50,7 +50,8 @@ class TranslationOverlayService : AccessibilityService() {
     private var currentContext: String = "UNKNOWN"
     private var wasInTargetApp = false
     private val japaneseParser = JapaneseTextParser()
-
+    private val database by lazy { JMDictDatabase.getDatabase(applicationContext) }
+    private val dao by lazy { database.jmdictDao() }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -83,7 +84,7 @@ class TranslationOverlayService : AccessibilityService() {
 //        }
 
         // Cancel the previous job when switching context
-// Cancel current job if context changes
+
         if (newContext != currentContext) {
             currentJob?.cancel()
             Log.d(TAG, "Job cancelled due to context change")
@@ -95,7 +96,7 @@ class TranslationOverlayService : AccessibilityService() {
         currentJob = serviceScope.launch {
             handleAccessibilityEvent(event, newContext)
         }
-
+// the go back to readify app
 //        when (event.eventType) {
 //            AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED -> {
 //                handleTextSelection(event)
@@ -254,25 +255,69 @@ class TranslationOverlayService : AccessibilityService() {
         }
     }
 
+    private data class SubtitleCandidate(
+        val text: String,
+        val level: Int,
+        val nodeCharacteristics: String,
+        val length: Int = text.length
+    )
+
     private fun findAndStoreSubtitle(node: AccessibilityNodeInfo?) {
+        val candidates = mutableListOf<SubtitleCandidate>()
+        findSubtitleCandidates(node, 0, candidates)
+
+        if (candidates.isNotEmpty()) {
+            // Sort by length in descending order
+            val sortedCandidates = candidates.sortedByDescending { it.length }
+
+            // Use the longest subtitle as the main text
+            val mainSubtitle = sortedCandidates.first()
+            currentSubtitleText = mainSubtitle.text
+
+            // Combine all unique words from all subtitles
+            val allWords = sortedCandidates
+                .map { extractJapaneseWords(it.text) }
+                .flatten()
+                .distinct()
+
+            japaneseWords = allWords
+            currentWordIndex = 0
+
+            Log.d("YOUTUBE", "Main subtitle text: ${mainSubtitle.text}")
+            Log.d("YOUTUBE", "All words found: $allWords")
+        }
+    }
+
+    private fun findSubtitleCandidates(
+        node: AccessibilityNodeInfo?,
+        level: Int,
+        candidates: MutableList<SubtitleCandidate>
+    ) {
         if (node == null) return
 
         try {
             if (node.className == "android.view.View" && !node.isClickable) {
                 val text = node.text?.toString()
                 if (!text.isNullOrEmpty() && containsJapaneseText(text)) {
-                    Log.d("YOUTUBE", "Found Japanese text: $text")
-                    currentSubtitleText = text
-                    japaneseWords = extractJapaneseWords(text)
-                    currentWordIndex = 0
-                    Log.d("YOUTUBE", "Stored subtitle text: $currentSubtitleText")
+                    // Only add if this text isn't a substring of an existing candidate
+                    val isSubstring = candidates.any { candidate ->
+                        candidate.text.contains(text) && candidate.text != text
+                    }
+
+                    if (!isSubstring) {
+                        Log.d("YOUTUBE", "Found candidate subtitle: $text at level $level")
+                        candidates.add(SubtitleCandidate(
+                            text = text,
+                            level = level,
+                            nodeCharacteristics = "view_${node.className}"
+                        ))
+                    }
                 }
             }
 
-            // Check children
             for (i in 0 until node.childCount) {
                 val child = node.getChild(i)
-                findAndStoreSubtitle(child)
+                findSubtitleCandidates(child, level + 1, candidates)
                 child?.recycle()
             }
         } catch (e: Exception) {
@@ -292,46 +337,6 @@ class TranslationOverlayService : AccessibilityService() {
         }
     }
 
-//    private fun handleYoutubeSubtitles(event: AccessibilityEvent) {
-//        try {
-//            if (!isVideoPaused) return
-//
-//            val rootNode = event.source ?: return
-//            findSubtitles(rootNode)
-//            rootNode.recycle()
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error processing subtitles: ${e.message}")
-//        }
-//    }
-
-//    private fun findSubtitles(node: AccessibilityNodeInfo?) {
-//        if (node == null) return
-//
-//        try {
-//            if (node.className == "android.view.View" && !node.isClickable) {
-//                val text = node.text?.toString() ?: return
-//                if (containsJapaneseText(text) && text != lastSelectedText) {
-//                    lastSelectedText = text
-//                    Log.d("YOUTUBE", "Found Japanese subtitle when paused: $text")
-//                    japaneseWords = extractJapaneseWords(text)
-//                    currentWordIndex = 0
-//
-//                    if (japaneseWords.isNotEmpty()) {
-//                        safeShowTranslationOverlay(japaneseWords[0])
-//                    }
-//                }
-//            }
-//
-//            // Check children
-//            for (i in 0 until node.childCount) {
-//                val child = node.getChild(i)
-//                findSubtitles(child)
-//                child?.recycle()
-//            }
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error finding subtitles: ${e.message}")
-//        }
-//    }
 
     private fun handleTextSelection(event: AccessibilityEvent) {
         try {
@@ -352,7 +357,7 @@ class TranslationOverlayService : AccessibilityService() {
                     0 // Fallback to first word if no position info
                 }
                 CoroutineScope(Dispatchers.Main).launch {
-                    safeShowTranslationOverlay(japaneseWords[currentWordIndex])
+                    safeShowTranslationOverlay(japaneseWords[currentWordIndex].surface)
                 }
             }
         } catch (e: Exception) {
@@ -366,7 +371,7 @@ class TranslationOverlayService : AccessibilityService() {
 
         // Find word whose start position is closest to selection
         japaneseWords.forEachIndexed { index, word ->
-            val wordStart = text.indexOf(word)
+            val wordStart = text.indexOf(word.surface)
             if (wordStart >= 0) {
                 val distance = kotlin.math.abs(wordStart - position)
                 if (distance < minDistance) {
@@ -391,7 +396,7 @@ class TranslationOverlayService : AccessibilityService() {
                     currentWordIndex = 0
 
                     if (japaneseWords.isNotEmpty()) {
-                        safeShowTranslationOverlay(japaneseWords[0])
+                        safeShowTranslationOverlay(japaneseWords[0].surface)
                     }
                 }
             }
@@ -413,11 +418,16 @@ class TranslationOverlayService : AccessibilityService() {
         }
     }
 
-    private fun extractJapaneseWords(text: String): List<String> {
+    data class JapaneseWord(
+        val surface: String,  // The form we display
+        val baseForm: String  // The form we use for dictionary lookup
+    )
+
+    private fun extractJapaneseWords(text: String): List<JapaneseWord> {
         val words = mutableListOf<String>()
         var currentWord = StringBuilder()
 
-        //TODO: either remove this logic and just use the tokenizer or fix it for edge cases
+        // Initial character-based extraction
         for (char in text) {
             if (isJapaneseChar(char)) {
                 currentWord.append(char)
@@ -430,19 +440,24 @@ class TranslationOverlayService : AccessibilityService() {
         if (currentWord.isNotEmpty()) {
             words.add(currentWord.toString())
         }
+
         Log.d(TAG, "Extracted words: $words")
         var tokens = japaneseParser.parseText(words.joinToString(" "))
         Log.d(TAG, "Parsed tokens: ${tokens}")
         tokens = japaneseParser.combineTokens(tokens)
         Log.d(TAG, "Combined Parsed tokens: ${tokens}")
-        words.clear()
-        for (token in tokens) {
-            if(token.baseForm != "*") {
-                words.add(token.surface)
-            }
-        }
 
-        return words
+        return tokens
+            .filter { it.baseForm != "*" }
+            .map { token ->
+                JapaneseWord(
+                    surface = token.surface,
+                    baseForm = if (token.baseForm != "*" && token.baseForm != null)
+                        token.baseForm
+                    else
+                        token.surface
+                )
+            }
     }
 
     private fun isJapaneseChar(c: Char): Boolean {
@@ -540,15 +555,42 @@ class TranslationOverlayService : AccessibilityService() {
         }
     }
 
-    private fun updateDisplayedWord() {
+    suspend fun getTranslationFromDictionary(query: String): String {
+        // Decide if query is a reading or kanji. For simplicity, just search both:
+        var results = dao.findByKanji(query)
+         if (results.isNotEmpty()) {
+            return results.joinToString("\n") { entry ->
+                // Format your output. Real JMDict entries have multiple glosses and senses, which
+                // you would want to store and format more richly. For now, a single gloss:
+                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+            }
+        }
+        results = dao.findByReading(query)
+        if (results.isNotEmpty()) {
+            return results.joinToString("\n") { entry ->
+                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+            }
+        }
+        results = dao.search(query)
+        if (results.isNotEmpty()) {
+            return results.joinToString("\n") { entry ->
+                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+            }
+        }
+        return "No translation found"
+    }
+
+     private fun updateDisplayedWord() {
         overlayView?.apply {
             val currentWord = japaneseWords.getOrNull(currentWordIndex) ?: return
-            findViewById<TextView>(R.id.originalText).text = currentWord
-            findViewById<TextView>(R.id.translatedText).text = simulateTranslation(currentWord)
+            findViewById<TextView>(R.id.originalText).text = currentWord.surface
 
-            // Update button states
-            findViewById<Button>(R.id.prevButton).isEnabled = currentWordIndex > 0
-            findViewById<Button>(R.id.nextButton).isEnabled = currentWordIndex < japaneseWords.size - 1
+            CoroutineScope(Dispatchers.IO).launch {
+                val translation = getTranslationFromDictionary(currentWord.baseForm)
+                withContext(Dispatchers.Main) {
+                    findViewById<TextView>(R.id.translatedText).text = translation
+                }
+            }
         }
     }
 
