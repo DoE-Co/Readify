@@ -14,7 +14,20 @@
     <string name="error_user_already_exists">Username already exists</string>
     <string name="userPasswdKV">com.cs407.readify.userPasswdKV</string>
     <string name="login_screen">LoginScreen</string>
+
+    <string name="create_account_screen">createAccountScreen</string>
+    <string name="accessibility_service_description">Translates selected text on screen</string>
+    <string name="japanese_highlighter_service_label">Japanese Text Highlighter</string>
+    <string name="translation_overlay_service_label">Japanese Overlay Translation</string>
+    <string name="japanese_highlighter_service_description">Highlights Japanese text in different colors to help with reading</string>
+    <string name="text_detector_service_label">Text Detector</string>
+    <string name="text_detector_service_description">Detects and logs text content from apps</string>
+    <string name="youtube_music_translation_service_description">Translates Japanese lyrics in YouTube Music. Tap on lyrics to see word-by-word translations.</string>
+    <string name="youtube_music_service_label">Readify YouTube Music Translation</string>
+
+
     <string name="create_account_screen">CreateAccountScreen</string>
     <string name="home_screen">Home</string>
     <string name="return_to_homefragment">Return to HomeFragment</string>
 </resources>
+

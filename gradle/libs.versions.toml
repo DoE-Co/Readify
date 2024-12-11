@@ -12,9 +12,17 @@ recyclerview = "1.3.2"
 fragmentKtx = "1.8.5"
 cardview = "1.0.0"
 navigationFragmentKtx = "2.8.3"
+#<<<<<<< Feature_Japanese_Translation_Overlay
+material = "1.12.0"
+roomCommon = "2.6.1"
+roomKtx = "2.6.1"
+roomCompiler = "2.6.1"  # Add this line, use same version as roomCommo
+#hope the merge works the above 3 versions i need for compiling the db on launch
+#main
 appcompat = "1.7.0"
 compose = "1.5.0"
 material3 = "1.1.1"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,9 +43,15 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomCommon" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }  # Add this line
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+
 

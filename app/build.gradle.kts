@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.kapt")  // Change this line
 }
 
 android {
@@ -46,6 +47,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Excludes the duplicate CONTRIBUTORS.md file
+            excludes += "/META-INF/CONTRIBUTORS.md"
+            excludes += "/META-INF/LICENSE.md"
+            // If you encounter similar issues with other META-INF files, you can use:
+            // excludes += ['META-INF/*']
         }
     }
 }
@@ -64,6 +70,21 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.navigation.fragment.ktx)
+
+    implementation(libs.material)
+    implementation ("com.google.android.material:material:1.11.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation ("com.google.android.material:material:1.6.0")
+    implementation ("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
+    implementation ("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
+
+    //ROOM
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
+    kapt("androidx.room:room-compiler:${libs.versions.roomCommon.get()}")  // Add this line
+
+
+
     implementation(libs.androidx.appcompat)
 
     // CameraX
@@ -82,6 +103,7 @@ dependencies {
     // ML Kit Translation
     implementation("com.google.mlkit:translate:16.1.2")
 
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -89,4 +111,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+   // ksp("androidx.room:room-compiler:2.5.0") // KSP for Room
+
+
 }
+
