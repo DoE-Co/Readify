@@ -600,27 +600,43 @@ class TranslationOverlayService : AccessibilityService() {
 
     suspend fun getTranslationFromDictionary(query: String): String {
         // Decide if query is a reading or kanji. For simplicity, just search both:
-        var results = dao.findByKanji(query)
-         if (results.isNotEmpty()) {
-            return results.joinToString("\n") { entry ->
-                // Format your output. Real JMDict entries have multiple glosses and senses, which
-                // you would want to store and format more richly. For now, a single gloss:
-                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+       return when(query) {
+            "の" ->  "of/possessive particle"
+            "に" ->  "to/at/in (particle)"
+            "は" -> "topic marker (particle)"
+            "を" -> "object marker (particle)"
+            "が" -> "subject marker (particle)"
+            "と" -> "with/and (particle)"
+            "で" -> "at/by/with (particle)"
+            "へ" -> "to/towards (particle)"
+            "から" -> "from (particle)"
+            "まで" -> "until (particle)"
+            "も" -> "also/too (particle)"
+            "な" -> "descriptive particle"
+        else-> {
+            var results = dao.findByKanji(query)
+            if (results.isNotEmpty()) {
+                return results.joinToString("\n") { entry ->
+                    // Format your output. Real JMDict entries have multiple glosses and senses, which
+                    // you would want to store and format more richly. For now, a single gloss:
+                    "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+                }
             }
-        }
-        results = dao.findByReading(query)
-        if (results.isNotEmpty()) {
-            return results.joinToString("\n") { entry ->
-                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+            results = dao.findByReading(query)
+            if (results.isNotEmpty()) {
+                return results.joinToString("\n") { entry ->
+                    "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+                }
             }
-        }
-        results = dao.search(query)
-        if (results.isNotEmpty()) {
-            return results.joinToString("\n") { entry ->
-                "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+            results = dao.search(query)
+            if (results.isNotEmpty()) {
+                return results.joinToString("\n") { entry ->
+                    "${entry.kanji ?: entry.reading}: ${entry.gloss}"
+                }
             }
+            return "No translation found"
         }
-        return "No translation found"
+     }
     }
 
      private fun updateDisplayedWord() {
