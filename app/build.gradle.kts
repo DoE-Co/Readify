@@ -81,6 +81,7 @@ dependencies {
     //ROOM
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.vision.common)
     kapt("androidx.room:room-compiler:${libs.versions.roomCommon.get()}")  // Add this line
 
 

@@ -22,6 +22,7 @@ roomCompiler = "2.6.1"  # Add this line, use same version as roomCommo
 appcompat = "1.7.0"
 compose = "1.5.0"
 material3 = "1.1.1"
+visionCommon = "17.3.0"
 
 
 [libraries]
@@ -48,6 +49,7 @@ androidx-room-common = { group = "androidx.room", name = "room-common", version.
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomCommon" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }  # Add this line
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+vision-common = { group = "com.google.mlkit", name = "vision-common", version.ref = "visionCommon" }
 
 
 [plugins]

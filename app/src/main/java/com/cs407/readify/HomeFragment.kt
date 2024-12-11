@@ -1,12 +1,14 @@
 package com.cs407.readify
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.LinearLayout
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -16,7 +18,6 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    // Note: The code references some views by findViewById. That's okay.
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,9 +34,7 @@ class HomeFragment : Fragment() {
         val popupCard = view.findViewById<CardView>(R.id.popupCard)
         val profile = view.findViewById<ImageButton>(R.id.profileButton)
 
-        // Set the click listener for the "+" button
         addButton.setOnClickListener {
-            // Toggle visibility of the popup card
             if (popupCard.visibility == View.GONE) {
                 popupCard.visibility = View.VISIBLE
                 val params = popupCard.layoutParams as FrameLayout.LayoutParams
@@ -47,25 +46,65 @@ class HomeFragment : Fragment() {
         }
 
         profile.setOnClickListener {
-            // Navigate to ProfileFragment
             findNavController().navigate(R.id.action_homeFragment_to_profileFragment)
         }
 
-        // Handle popupCard item clicks:
-        // For simplicity, we assume the first linear layout is "Scan Document", second is "Overlay" and third is "Add a Word".
         val scanLayout = popupCard.findViewById<LinearLayout>(R.id.scanDocumentLinearLayout)
         val overlayLayout = popupCard.findViewById<LinearLayout>(R.id.overlayLinearLayout)
         val addWordLayout = popupCard.findViewById<LinearLayout>(R.id.addWordLinearLayout)
 
-        // Navigate to cameraFragment
         scanLayout.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_cameraFragment)
         }
 
-        // If you want to add overlay or add word features later, handle them similarly:
-        // overlayLayout.setOnClickListener { ... }
-        // addWordLayout.setOnClickListener { ... }
+        overlayLayout.setOnClickListener {
+            showEnableAccessibilityDialog()
+        }
+    }
 
+    private fun requestOverlayPermission() {
+        if (!Settings.canDrawOverlays(requireContext())) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Enable Overlay Permission")
+                .setMessage("To show translations, please allow display over other apps.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    try {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${requireContext().packageName}")
+                        )
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Unable to open settings", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setCancelable(false)
+                .show()
+        } else {
+            // Permission is already granted
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${requireContext().packageName}")
+            )
+            startActivity(intent)
+            //Toast.makeText(requireContext(), "Overlay permission is already granted", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showEnableAccessibilityDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Enable Translation Service")
+            .setMessage("To use the translation overlay, please enable the accessibility service in Settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Unable to open settings", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setCancelable(false)
+            .show()
     }
 
     override fun onDestroyView() {

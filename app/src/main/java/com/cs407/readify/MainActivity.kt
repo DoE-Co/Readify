@@ -1,6 +1,4 @@
 package com.cs407.readify
-
-
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -13,25 +11,44 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var navController: NavController
     override fun onCreate(savedInstanceState: Bundle?) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_main)
 
         // Check permissions immediately
         //checkAndRequestPermissions()
 
-        // Handle text from browser selection
-        handleIncomingText()
+        // Setup Navigation
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+
+
 
         // Check if accessibility service is enabled
         if (!isAccessibilityServiceEnabled()) {
             //showEnableAccessibilityDialog()
+        }
+
+
+
+
+        enableEdgeToEdge()
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+
         }
 
         // Check for overlay permission
@@ -39,42 +56,9 @@ class MainActivity : AppCompatActivity() {
             requestOverlayPermission()
         }
 
-        // Simulate receiving text from browser
-//        val testButton = findViewById<Button>(R.id.testButton)
-//        testButton.setOnClickListener {
-//            showTranslationBottomSheet("こんにちは")
-//        }
+        // Handle text from browser selection
+        handleIncomingText()
 
-//         val youtubeButton = findViewById<Button>(R.id.youtubeButton)
-//         youtubeButton.setOnClickListener {
-// //            val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
-// //            startActivity(intent)
-//               showYoutubeUrlDialog()
-//         }
-//     }
-
-//     private fun showYoutubeUrlDialog(){
-//         val youtubeLinkBottomSheet = YouTubeLinkBottomSheet.newInstance()
-//         youtubeLinkBottomSheet.setOnLinkSubmittedListener { url ->
-//             val intent = Intent(this, YouTubeWebPlayerActivity::class.java)
-//             intent.putExtra("videoUrl", url)
-//             startActivity(intent)
-//         }
-//         youtubeLinkBottomSheet.show(supportFragmentManager, "youtube_link")
-//     }
-
-
-
-
-
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-
-        }
     }
 
     private fun handleIncomingText() {
@@ -84,14 +68,21 @@ class MainActivity : AppCompatActivity() {
                     ?: intent?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT_READONLY)
 
                 text?.let {
-                    showTranslationBottomSheet(it.toString())
+                    // Navigate to appropriate fragment with text
+                    val bundle = Bundle().apply {
+                        putString("text", it.toString())
+                    }
+                    // You'll need to add this destination to your nav graph
+                    //navController.navigate(R.id.translationFragment, bundle)
                 }
             }
-            // Handle existing test case
             Intent.ACTION_SEND -> {
                 if (intent.type == "text/plain") {
                     intent.getStringExtra(Intent.EXTRA_TEXT)?.let { text ->
-                        showTranslationBottomSheet(text)
+                        val bundle = Bundle().apply {
+                            putString("text", text)
+                        }
+                       // navController.navigate(R.id.translationFragment, bundle)
                     }
                 }
             }
