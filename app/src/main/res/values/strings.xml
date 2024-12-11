@@ -15,7 +15,7 @@
     <string name="userPasswdKV">com.cs407.readify.userPasswdKV</string>
     <string name="login_screen">LoginScreen</string>
 
-    <string name="create_account_screen">createAccountScreen</string>
+  
     <string name="accessibility_service_description">Translates selected text on screen</string>
     <string name="japanese_highlighter_service_label">Japanese Text Highlighter</string>
     <string name="translation_overlay_service_label">Japanese Overlay Translation</string>
